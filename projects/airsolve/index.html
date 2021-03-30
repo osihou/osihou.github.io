@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+		<!-- meta -->
+		<meta charset="utf-8">
+		<title>Aircraft performance method</title>
+		<meta name="author" content="osihou">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+		<!-- stylesheet-->
+		<link href="../../files/style.css" rel="stylesheet">
+
+		<!-- favicon -->
+		<link rel="icon" type="image/png" href="../../icons/favicon-16x16.png" sizes="16x16">
+		<link rel="icon" type="image/png" href="../../icons/favicon-32x32.png" sizes="32x32">
+
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+        <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"> </script>
+
+	</head>
+
+	<body>
+
+		<div class="container">
+			<aside>
+				<a href="https://osihou.github.io/"><img id="avatar" alt="avatar" src="../../files/avatar.png"></a>
+				<div id="name"><a href="https://osihou.github.io/">osihou</a></div>
+				<div id="bio">aerospace engineering student</div>
+				<div id="sidebar-links">
+					<a href="https://osihou.github.io/about/">About</a>&nbsp;|&nbsp;<a href="https://osihou.github.io/projects/">Projects</a>
+				</div>
+
+				<div id="social">
+
+                        <a href="https://github.com/osihou" class="icon github">
+							<i class=" fa fa-github"></i>
+                        </a>
+
+					   <a href="mailto:kenmajewski@protonmail.com" class="icon mail">
+						   	<i class=" fa fa-envelope" aria-hidden="true"></i>
+					   </a>
+
+					   	<a href="https://www.linkedin.com/in/kenan-majewski/" class="icon linkedin" >
+							<i class=" fa fa-linkedin-square"></i>
+						</a>
+
+				</div>
+			</aside>
+
+			<article>
+		<h1 class="title">Aircraft performance method</h1>
+
+		<div class="content">
+
+			<p>Aricraft Performance Method is used when we want to know what combination of velocity
+			and thrust setting will allow an aircraft to climb to cruise altitude and how fast. </p>
+
+
+
+			<img id = "axis-png" alt="axis" src="axis.png">
+			<p>The climb angle \(\theta\) is the angle between horizontal and the wind X-axis. Angle of attack \(\alpha\) is
+			the angle between chord line of an airfoil and the vector  representing the relative motion between the body and the fluid through
+			which it is moving. For most aircraft the thrust axis has little incidence with respect to wind axis under most flight conditions.
+			This angle is denoted by Greek letter \(\varphi\).</p>
+
+			<p>Summing forces in the Xs and Zs directions yields Equations:
+
+				\[ - T cos(\theta+\alpha - \phi) + L sin(\theta) + D cos (\theta) = 0 \]
+
+				\[ T sin(\theta + \alpha - \phi) + L cos(\theta) - D sin(\theta) - Q = 0 \]
+
+Lift
+				\[ L = {1 \over 2} \rho S C_L V^2 \]
+
+Drag
+				\[ D = {1 \over 2} \rho S C_D V^2 \]
+
+Thrust
+				\[ T = {N_r \over V} \]
+
+Lift & Drag coeficients
+				\[ C_L = a(\alpha - \alpha_0) \]
+
+				\[ C_D = C_{D min} + A C_L^2 \]
+
+
+where A can be described as
+				\[ A = {1 \over {\pi \Lambda_e}} \]
+
+Slope of the lift curve
+				\[ a = {dC_L \over d\alpha} \]
+
+
+
+Weight
+				\[ Q = mg \]
+
+Advance ratio
+				\[ J = { V \over {n_s D}} \]
+
+International Standard Atmosphere air density
+				\[ \rho = 1.2255 (1 -{ {H} \over {44300}})^{4.256} \]
+
+We can write the equation as:
+
+\[ - {N_r \over V} cos(\theta+\alpha - \phi) + {1 \over 2} \rho S C_L V^2 sin(\theta) +  {1 \over 2} \rho S C_D V^2 cos (\theta) = 0 \]
+
+\[ {N_r \over V} sin(\theta + \alpha - \phi) + {1 \over 2} \rho S C_L V^2 cos(\theta) -  {1 \over 2} \rho S C_D V^2 sin(\theta) - mg = 0 \]
+</p>
+<p>Code in R</p>
+
+<div class="codecontainer">
+	<pre><span></span><span class="c1"># x[1] - th</span>
+<span class="c1"># x[2] - alp</span>
+
+<span class="n">root.stat</span> <span class="o">&lt;-</span> <span class="nf">function</span><span class="p">(</span><span class="n">rss</span><span class="p">){</span>
+
+    <span class="c1"># International Standard Atmosphere air density</span>
+    <span class="n">atm.rho</span> <span class="o">&lt;-</span> <span class="nf">function</span><span class="p">(</span><span class="n">H</span><span class="p">,</span> <span class="n">rho0</span> <span class="o">=</span> <span class="m">1.2255</span><span class="p">){</span>
+      <span class="n">rho0</span> <span class="o">*</span> <span class="p">(</span><span class="m">1</span> <span class="o">-</span> <span class="n">H</span><span class="o">/</span><span class="m">44300</span> <span class="p">)</span><span class="o">^</span><span class="m">4.256</span>
+    <span class="p">}</span>
+
+    <span class="n">calulate.roots</span> <span class="o">&lt;-</span> <span class="nf">function</span><span class="p">(</span><span class="n">height</span><span class="p">,</span> <span class="n">ALPHA</span> <span class="o">=</span> <span class="kc">TRUE</span><span class="p">){</span>
+
+        <span class="n">rho</span> <span class="o">&lt;-</span> <span class="nf">atm.rho</span><span class="p">(</span><span class="n">height</span><span class="p">)</span>
+
+        <span class="n">value.v.min</span> <span class="o">&lt;-</span> <span class="nf">function</span><span class="p">(</span><span class="n">rho</span><span class="p">,</span> <span class="n">Cz.max</span> <span class="o">=</span> <span class="m">1.8</span><span class="p">)</span> <span class="nf">sqrt</span><span class="p">((</span><span class="m">2</span> <span class="o">*</span> <span class="n">rss</span><span class="o">$</span><span class="n">m</span> <span class="o">*</span> <span class="n">rss</span><span class="o">$</span><span class="n">g</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">rho</span> <span class="o">*</span> <span class="n">rss</span><span class="o">$</span><span class="n">S</span> <span class="o">*</span> <span class="n">Cz.max</span><span class="p">))</span>
+
+
+        <span class="n">V.new</span> <span class="o">&lt;-</span> <span class="nf">seq</span><span class="p">(</span><span class="n">from</span> <span class="o">=</span> <span class="nf">value.v.min</span><span class="p">(</span><span class="n">rho</span><span class="p">),</span>
+                     <span class="n">to</span> <span class="o">=</span> <span class="n">rss</span><span class="o">$</span><span class="n">VMAX</span><span class="p">,</span>
+                     <span class="n">length.out</span> <span class="o">=</span> <span class="m">40</span><span class="p">)</span>
+
+        <span class="n">df.model</span> <span class="o">&lt;-</span> <span class="nf">function</span><span class="p">(</span> <span class="n">v</span> <span class="p">){</span>
+
+            <span class="n">Nrt</span> <span class="o">&lt;-</span> <span class="nf">spline</span><span class="p">(</span><span class="nf">data.frame</span><span class="p">(</span><span class="n">jj</span> <span class="o">=</span> <span class="n">J</span><span class="p">,</span>
+                                     <span class="n">nn</span> <span class="o">=</span> <span class="n">mat</span><span class="p">[,</span> <span class="p">(</span><span class="n">height</span> <span class="o">+</span> <span class="m">10</span> <span class="p">)</span><span class="o">/</span><span class="m">10</span> <span class="o">+</span> <span class="m">1</span><span class="p">]),</span>
+                          <span class="n">xout</span> <span class="o">=</span> <span class="n">J.new</span><span class="p">,</span>
+                          <span class="n">method</span> <span class="o">=</span> <span class="s">"fmm"</span><span class="p">)</span>
+
+            <span class="n">r.df</span> <span class="o">&lt;-</span> <span class="nf">data.frame</span><span class="p">(</span><span class="n">ps</span> <span class="o">=</span> <span class="m">10</span><span class="o">^</span><span class="m">3</span><span class="o">*</span><span class="n">Nrt</span><span class="o">$</span><span class="n">y</span><span class="o">/</span><span class="n">v</span><span class="p">,</span>
+                               <span class="n">as</span> <span class="o">=</span> <span class="m">0.5</span> <span class="o">*</span> <span class="n">rho</span> <span class="o">*</span> <span class="n">rss</span><span class="o">$</span><span class="n">S</span> <span class="o">*</span> <span class="n">v</span><span class="o">^</span><span class="m">2</span><span class="p">,</span>
+                               <span class="n">nrt</span> <span class="o">=</span> <span class="n">Nrt</span><span class="o">$</span><span class="n">y</span><span class="p">,</span>
+                               <span class="n">vv</span> <span class="o">=</span> <span class="n">v</span><span class="p">,</span>
+                               <span class="n">jj</span> <span class="o">=</span> <span class="n">v</span><span class="o">/</span><span class="p">(</span><span class="n">prop.char</span><span class="o">$</span><span class="n">NS</span><span class="o">*</span><span class="n">prop.char</span><span class="o">$</span><span class="n">D</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="p">}</span>
+
+        <span class="c1"># Lift Coeficient</span>
+        <span class="n">Cz</span> <span class="o">&lt;-</span> <span class="nf">function</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span> <span class="n">rss</span><span class="o">$</span><span class="n">a</span><span class="o">*</span><span class="p">(</span><span class="n">alpha</span> <span class="o">-</span> <span class="n">rss</span><span class="o">$</span><span class="n">ALPHA0</span><span class="p">)</span>
+
+        <span class="c1"># Drag Coeficient</span>
+        <span class="n">Cx</span> <span class="o">&lt;-</span> <span class="nf">function</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span> <span class="n">rss</span><span class="o">$</span><span class="n">Cx0</span> <span class="o">+</span> <span class="p">((</span><span class="nf">Cz</span><span class="p">(</span><span class="n">alpha</span><span class="p">))</span><span class="o">^</span><span class="m">2</span> <span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">rss</span><span class="o">$</span><span class="n">Le</span> <span class="o">*</span> <span class="kc">pi</span><span class="p">)</span>
+
+
+        <span class="c1"># Model for solving non-linear equation</span>
+        <span class="n">in.model</span> <span class="o">&lt;-</span> <span class="nf">function</span><span class="p">(</span><span class="n">r</span><span class="p">){</span>
+
+            <span class="n">model</span> <span class="o">&lt;-</span> <span class="nf">function</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="nf">c</span><span class="p">(</span><span class="n">F1</span> <span class="o">=</span> <span class="o">-</span><span class="n">r</span><span class="p">[</span><span class="m">1</span><span class="p">]</span> <span class="o">*</span> <span class="nf">cos</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="m">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="m">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">fi</span><span class="p">)</span> <span class="o">+</span>
+                                         <span class="n">r</span><span class="p">[</span><span class="m">2</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="nf">Cz</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="m">2</span><span class="p">])</span> <span class="o">*</span> <span class="nf">sin</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="m">1</span><span class="p">])</span> <span class="o">+</span>
+                                         <span class="nf">Cx</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="m">2</span><span class="p">])</span> <span class="o">*</span> <span class="nf">cos</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="m">1</span><span class="p">])),</span>
+
+                                   <span class="n">F2</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="m">1</span><span class="p">]</span> <span class="o">*</span> <span class="nf">sin</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="m">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="m">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">fi</span><span class="p">)</span> <span class="o">+</span>
+                                        <span class="n">r</span><span class="p">[</span><span class="m">2</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="nf">Cz</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="m">2</span><span class="p">])</span> <span class="o">*</span> <span class="nf">cos</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="m">1</span><span class="p">])</span> <span class="o">-</span>
+                                        <span class="nf">Cx</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="m">2</span><span class="p">])</span> <span class="o">*</span> <span class="nf">sin</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="m">1</span><span class="p">]))</span> <span class="o">-</span> <span class="n">m</span><span class="o">*</span><span class="n">g</span><span class="p">)</span>
+
+            <span class="n">ss</span> <span class="o">&lt;-</span> <span class="nf">multiroot</span><span class="p">(</span><span class="n">f</span> <span class="o">=</span> <span class="n">model</span><span class="p">,</span> <span class="n">start</span> <span class="o">=</span> <span class="nf">c</span><span class="p">(</span><span class="m">0</span><span class="p">,</span> <span class="m">0</span><span class="p">),</span> <span class="n">positive</span> <span class="o">=</span> <span class="kc">TRUE</span><span class="p">,</span> <span class="n">maxiter</span> <span class="o">=</span> <span class="m">10000</span><span class="p">)</span>
+
+            <span class="n">ss</span><span class="o">$</span><span class="n">root</span>
+        <span class="p">}</span>
+
+        <span class="n">resdf</span> <span class="o">&lt;-</span> <span class="nf">apply</span><span class="p">(</span><span class="nf">df.model</span><span class="p">(</span><span class="n">V.new</span><span class="p">),</span> <span class="m">1</span><span class="p">,</span>  <span class="n">in.model</span><span class="p">)</span>
+
+        <span class="n">rrr.df</span> <span class="o">&lt;-</span> <span class="nf">data.frame</span><span class="p">(</span><span class="nf">t</span><span class="p">(</span><span class="n">resdf</span><span class="p">),</span> <span class="n">vv</span> <span class="o">=</span> <span class="n">V.new</span><span class="p">)</span> <span class="o">%&gt;%</span> <span class="nf">filter</span><span class="p">(</span><span class="n">X1</span> <span class="o">&gt;</span> <span class="m">0</span><span class="p">)</span>
+
+        <span class="nf">if</span><span class="p">(</span><span class="nf">length</span><span class="p">(</span><span class="nf">t</span><span class="p">(</span><span class="n">rrr.df</span><span class="p">))</span> <span class="o">==</span> <span class="m">0</span><span class="p">){</span>
+            <span class="nf">return</span><span class="p">(</span><span class="n">rr.df</span><span class="p">)</span>
+        <span class="p">}</span>
+
+        <span class="n">V.new</span> <span class="o">&lt;-</span> <span class="nf">seq</span><span class="p">(</span><span class="n">from</span> <span class="o">=</span> <span class="nf">value.v.min</span><span class="p">(</span><span class="n">rho</span><span class="p">),</span>
+                   <span class="n">to</span> <span class="o">=</span> <span class="nf">max</span><span class="p">(</span><span class="n">rrr.df</span><span class="o">$</span><span class="n">vv</span><span class="p">),</span>
+                   <span class="n">length.out</span> <span class="o">=</span> <span class="m">40</span><span class="p">)</span>
+
+
+        <span class="n">resdf</span> <span class="o">&lt;-</span> <span class="nf">apply</span><span class="p">(</span><span class="nf">df.model</span><span class="p">(</span><span class="n">V.new</span><span class="p">),</span> <span class="m">1</span><span class="p">,</span> <span class="n">in.model</span><span class="p">)</span>
+
+        <span class="n">return.df</span> <span class="o">&lt;-</span> <span class="nf">data.frame</span><span class="p">(</span><span class="nf">df.model</span><span class="p">(</span><span class="n">V.new</span><span class="p">),</span>
+                                <span class="n">theta</span> <span class="o">=</span> <span class="nf">t</span><span class="p">(</span><span class="n">resdf</span><span class="p">)[</span> <span class="p">,</span><span class="m">1</span><span class="p">],</span>
+                                <span class="n">alpha</span> <span class="o">=</span> <span class="nf">t</span><span class="p">(</span><span class="n">resdf</span><span class="p">)[</span> <span class="p">,</span><span class="m">2</span><span class="p">],</span>
+                                <span class="n">w</span> <span class="o">=</span> <span class="n">V.new</span> <span class="o">*</span> <span class="nf">sin </span><span class="p">(</span><span class="nf">t</span><span class="p">(</span><span class="n">resdf</span><span class="p">)[</span> <span class="p">,</span><span class="m">1</span><span class="p">]))</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre>
+</div>
+
+
+
+			<div id="back-to-articles"><a href="https://osihou.github.io/articles/">« Articles</a></div>
+
+
+
+		</div>
+				<hr>
+			</article>
+
+			<footer>
+				<p>Aio te Aeacida Romānos vincere posse.</p>
+			</footer>
+		</div>
+
+ 	<!-- miau miau -->
+
+	</body>
+
+</html>
